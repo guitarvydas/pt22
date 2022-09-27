@@ -1,0 +1,127 @@
+// http://primepuzzle.com/tp2/syntax-diagrams.html
+
+Pascal {
+CompilationUnit = Program | Procedure
+
+Procedure = kw<"procedure"> identifier CompilationUnitFormalParameterList? ";" Block ";"
+
+Program = kw<"program"> identifier "(" identifier ("," identifier)* ")" ";" Block "."
+
+Routine = kw<"procedure"> identifier FormalParameterList? ";" Block ";"
+
+FormalParameterList = "(" FormalParameter+ ")"
+FormalParameter = kw<"var">? identifier ":" TypeIdentifier
+
+CompilationUnitFormalParameterList = "(" CompilationUnitFormalParameter+ ")"
+CompilationUnitFormalParameter = kw<"var">? identifier ":" Type
+
+Block =
+  | Constants? Types? Variables? Routine* kw<"begin"> Stmt* kw<"end"> -- def
+  | kw<"external"> -- external
+
+Constants = kw<"const"> ( identifier "=" Constant ";" )+
+Types = kw<"type"> ( identifier "=" Type ";" )+
+Variables = kw<"var"> ( identifier ":" Type ";" )+
+
+Statement = Stmt?
+
+Stmt =
+  | Variable ":=" Expression -- assign
+  | BuiltinCall -- builtin
+  | callableIdentifier ( "(" ListOf<Expression, ","> ")" )? -- call
+  | kw<"begin"> ListOf<Statement, ";"> kw<"end"> -- begin
+  | kw<"if"> Expression kw<"then"> Statement ( kw<"else"> Statement )? -- if
+  | kw<"case"> Expression kw<"of"> ListOf<CaseClause, ";"> -- case
+  | kw<"while"> Expression kw<"do"> Statement -- while
+  | kw<"repeat"> ListOf<Statement, ";"> kw<"until"> Expression -- repeat
+
+CaseClause = ListOf<Constant, ","> ":" Statement
+
+SimpleType =
+  | kw<"integer"> -- integer
+  | kw<"char"> -- char
+  | kw<"boolean"> -- boolean
+  | Constant ".." Constant -- range
+
+Type =
+  | "^" TypeIdentifier -- pointer
+  | StructuredType -- structured
+  | SimpleType -- simple
+
+StructuredType =
+  | kw<"packed">? kw<"array"> SimpleType? kw<"of"> SimpleType -- array
+  | kw<"file"> kw<"of"> SimpleType -- file
+
+Expression =
+  | kw<"not"> BooleanExpression -- not
+  | IntExpression ("*" | kw<"div"> | kw<"mod">) IntExpression -- muldivmod
+  | BooleanExpression kw<"and"> BooleanExpression -- and
+  | IntExpression ("+" | "-") IntExpression -- addsub
+  | BooleanExpression kw<"or"> BooleanExpression -- or
+  | IntCharExpression relop IntCharExpression -- rel
+
+BooleanExpression =
+  | kw<"not"> BooleanExpression -- not
+  | BooleanExpression kw<"and"> BooleanExpression -- and
+  | BooleanExpression kw<"or"> BooleanExpression  -- or
+  | IntCharExpression relop IntCharExpression  -- rel
+
+IntExpression =
+  | IntExpression ("*" | kw<"div"> | kw<"mod">) IntExpression -- muldivmod
+  | IntExpression ("+" | "-") IntExpression -- addsub
+  | intvariable -- var
+  | intconstant -- const
+
+IntCharExpression =
+  | IntCharExpression relop IntCharExpression -- rel
+  | intOrCharVariable -- var
+  | intconstant -- intconst
+  | charconstant -- charconst
+
+CharExpression =
+  | CharExpression relop CharExpression -- rel
+  | charvariable -- var
+  | charconstant -- charconst
+
+Variable = varOrFieldID VarTail*
+
+VarTail = 
+  | "[" ListOf<IntExpression, ","> "]" -- subscript
+  | "." FieldID -- fieldref
+  | "^" -- pointerref
+  
+relop = "=" | "<>" | "<" | "<=" | ">" | ">="
+
+BuiltinCall =
+  | kw<"ord"> "(" CharExpression ")" -- ord
+  | kw<"chr"> "(" IntExpression ")" -- chr
+  | kw<"eoln"> ( "(" Filename ")" )? -- eoln
+  | kw<"eof"> ( "(" Filename ")" )? -- eof
+  | kw<"reset"> "(" Filename ")" -- reset
+  | kw<"rewrite"> "(" Filename ")" -- rewrite
+  | kw<"write"> "(" (Filename ",")? ListOf<TextWriteParameter, ","> ")" -- writeText
+  | kw<"write"> "(" (Filename ",")? ListOf<Expression, ","> ")" -- writeGeneral
+  | kw<"write"> -- write
+  | kw<"writeln"> ( "(" Filename ")" )? -- writeln
+  | kw<"read"> "(" (Filename ",")? ListOf<Expression, ","> ")" -- read
+  | kw<"readln"> ( "(" Filename ")" )? -- readln
+
+TextWriteParameter = Expression ( ":" Expression )?
+
+intvariable = identifier
+intOrCharVariable = identifier
+intconstant = digit+
+charvariable = identifier
+charconstant = "'" letter* "'"
+Constant = intconstant | charconstant
+
+kw<str> = id<str>
+id<str> = str ~alnum
+
+identifier = letter alnum*
+callableIdentifier = identifier
+TypeIdentifier = identifier
+varOrFieldID = identifier
+FieldID = identifier
+Filename = CharExpression
+}
