@@ -10,8 +10,8 @@ number =
   
 comment =
   | "{" dontcareChar* "}" -- nested
-  | dontcareChar*         -- base
   
 dontcareChar = ~"}" ~"{" any
 space += comment
 }
+
