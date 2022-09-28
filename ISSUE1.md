@@ -15,7 +15,7 @@ number =
   
 comment =
   | "{" dontcareChar* "}" -- nested
-  | dontcareChar*         -- base
+  | dontcareChar+         -- base
   
 dontcareChar = ~"}" ~"{" any
 space += comment
